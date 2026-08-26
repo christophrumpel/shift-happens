@@ -79,6 +79,11 @@ class GearRun
         return Cache::get(self::KEY);
     }
 
+    public static function forget(): void
+    {
+        Cache::forget(self::KEY);
+    }
+
     public static function isRunning(): bool
     {
         $run = self::current();

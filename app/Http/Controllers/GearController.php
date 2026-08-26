@@ -31,6 +31,15 @@ class GearController
         return response()->json(['result' => 'queued']);
     }
 
+    public function reset(): JsonResponse
+    {
+        if (! GearRun::isRunning()) {
+            GearRun::forget();
+        }
+
+        return response()->json(['result' => 'reset']);
+    }
+
     public function status(): JsonResponse
     {
         return response()->json(GearRun::current());

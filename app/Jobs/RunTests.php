@@ -48,9 +48,14 @@ class RunTests implements ShouldQueue
     {
         $lines = file(base_path('.env')) ?: [];
 
-        return collect($lines)
-            ->filter(fn (string $line): bool => preg_match('/^\s*[A-Z0-9_]+\s*=/', $line) === 1)
-            ->mapWithKeys(fn (string $line): array => [trim(explode('=', $line, 2)[0]) => false])
-            ->all();
+        $env = [];
+
+        foreach ($lines as $line) {
+            if (preg_match('/^\s*[A-Z0-9_]+\s*=/', $line) === 1) {
+                $env[trim(explode('=', $line, 2)[0])] = false;
+            }
+        }
+
+        return $env;
     }
 }

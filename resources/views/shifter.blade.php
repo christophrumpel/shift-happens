@@ -42,6 +42,45 @@
     border: 1px solid var(--border); color: var(--muted);
   }
   .status.connected { border-color: var(--green); color: var(--green); }
+  .hint { font-size: 12px; color: #566070; margin-left: auto; margin-right: 16px; }
+
+  /* ── gear info modal (press "i") ── */
+  #infoModal {
+    position: fixed; inset: 0; background: rgba(13,17,23,0.8);
+    display: none; align-items: center; justify-content: center; z-index: 20;
+  }
+  #infoModal.open { display: flex; }
+  .info-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; min-width: 420px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  }
+  .info-head {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px; text-transform: uppercase; letter-spacing: 0.16em;
+    color: var(--muted); font-weight: 600; margin-bottom: 20px;
+  }
+  .info-close {
+    font-size: 11px; border: 1px solid var(--border); border-radius: 6px;
+    padding: 3px 8px; text-transform: lowercase; letter-spacing: 0.05em;
+  }
+  .info-row {
+    display: flex; align-items: center; gap: 18px;
+    padding: 12px 4px; border-bottom: 1px solid var(--border);
+    font-size: 17px;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-gear {
+    font-size: 26px; font-weight: 800; color: var(--accent);
+    width: 36px; text-align: center; flex-shrink: 0;
+  }
+  .info-label { font-weight: 600; }
+  .info-hold {
+    margin-left: auto; font-size: 12px; font-weight: 700;
+    color: var(--yellow); background: rgba(210,153,34,0.15);
+    padding: 3px 10px; border-radius: 6px;
+  }
+  .info-foot { margin-top: 16px; font-size: 12px; color: var(--muted); }
 
   .layout {
     flex: 1;
@@ -75,10 +114,6 @@
     transition: fill 0.12s;
   }
   .pos-label.active { fill: var(--accent); }
-  .pos-sub {
-    font-family: var(--mono); font-size: 12px; font-weight: 600;
-    fill: #566070; text-anchor: middle;
-  }
   .pos-dot { fill: none; stroke: var(--accent); stroke-width: 2.5; opacity: 0; transition: opacity 0.12s; }
   .pos-dot.active { opacity: 1; }
   #knob {
@@ -218,35 +253,36 @@
 
 <header>
   <h1>GEAR <span>SHIFTER</span></h1>
+  <span class="hint">i · info</span>
   <div class="status" id="status">no gamepad</div>
 </header>
 
 <div class="layout">
 
   <div class="panel" id="shifterPanel">
-    <svg id="gate" viewBox="0 0 480 350">
-      <text class="pos-label" data-gear="1" x="90"  y="42">1</text>
-      <text class="pos-label" data-gear="3" x="190" y="42">3</text>
-      <text class="pos-label" data-gear="5" x="290" y="42">5</text>
-      <text class="pos-label" data-gear="7" x="390" y="42">7</text>
-      <text class="pos-label" data-gear="2" x="90"  y="308">2</text>
-      <text class="pos-label" data-gear="4" x="190" y="308">4</text>
-      <text class="pos-label" data-gear="6" x="290" y="308">6</text>
-      <text class="pos-label" data-gear="R" x="390" y="308">R</text>
-      <line class="slot" x1="90"  y1="175" x2="390" y2="175"/>
-      <line class="slot" x1="90"  y1="100" x2="90"  y2="250"/>
-      <line class="slot" x1="190" y1="100" x2="190" y2="250"/>
-      <line class="slot" x1="290" y1="100" x2="290" y2="250"/>
-      <line class="slot" x1="390" y1="100" x2="390" y2="250"/>
-      <circle class="pos-dot" data-gear="1" cx="90"  cy="100" r="27"/>
-      <circle class="pos-dot" data-gear="2" cx="90"  cy="250" r="27"/>
-      <circle class="pos-dot" data-gear="3" cx="190" cy="100" r="27"/>
-      <circle class="pos-dot" data-gear="4" cx="190" cy="250" r="27"/>
-      <circle class="pos-dot" data-gear="5" cx="290" cy="100" r="27"/>
-      <circle class="pos-dot" data-gear="6" cx="290" cy="250" r="27"/>
-      <circle class="pos-dot" data-gear="7" cx="390" cy="100" r="27"/>
-      <circle class="pos-dot" data-gear="R" cx="390" cy="250" r="27"/>
-      <circle id="knob" class="neutral" cx="0" cy="0" r="16" transform="translate(240,175)"/>
+    <svg id="gate" viewBox="0 0 480 400">
+      <text class="pos-label" data-gear="1" x="90"  y="40">1</text>
+      <text class="pos-label" data-gear="3" x="190" y="40">3</text>
+      <text class="pos-label" data-gear="5" x="290" y="40">5</text>
+      <text class="pos-label" data-gear="7" x="390" y="40">7</text>
+      <text class="pos-label" data-gear="2" x="90"  y="330">2</text>
+      <text class="pos-label" data-gear="4" x="190" y="330">4</text>
+      <text class="pos-label" data-gear="6" x="290" y="330">6</text>
+      <text class="pos-label" data-gear="R" x="390" y="330">R</text>
+      <line class="slot" x1="90"  y1="200" x2="390" y2="200"/>
+      <line class="slot" x1="90"  y1="125" x2="90"  y2="275"/>
+      <line class="slot" x1="190" y1="125" x2="190" y2="275"/>
+      <line class="slot" x1="290" y1="125" x2="290" y2="275"/>
+      <line class="slot" x1="390" y1="125" x2="390" y2="275"/>
+      <circle class="pos-dot" data-gear="1" cx="90"  cy="125" r="27"/>
+      <circle class="pos-dot" data-gear="2" cx="90"  cy="275" r="27"/>
+      <circle class="pos-dot" data-gear="3" cx="190" cy="125" r="27"/>
+      <circle class="pos-dot" data-gear="4" cx="190" cy="275" r="27"/>
+      <circle class="pos-dot" data-gear="5" cx="290" cy="125" r="27"/>
+      <circle class="pos-dot" data-gear="6" cx="290" cy="275" r="27"/>
+      <circle class="pos-dot" data-gear="7" cx="390" cy="125" r="27"/>
+      <circle class="pos-dot" data-gear="R" cx="390" cy="275" r="27"/>
+      <circle id="knob" class="neutral" cx="0" cy="0" r="16" transform="translate(240,200)"/>
     </svg>
     <div id="currentGear">
       <div class="label">Current gear</div>
@@ -292,6 +328,17 @@
 
 </div>
 
+<div id="infoModal">
+  <div class="info-card">
+    <div class="info-head">
+      <span>Gear mapping</span>
+      <span class="info-close">esc</span>
+    </div>
+    <div id="infoRows"></div>
+    <div class="info-foot">unmapped gears do nothing</div>
+  </div>
+</div>
+
 <script>
 (() => {
   // ── button index → gear (standard TH8S) ──────────────────────
@@ -308,13 +355,9 @@
   const POLL_MS = 500;
 
   const POS = {
-    '1':[90,100],  '3':[190,100], '5':[290,100], '7':[390,100],
-    '2':[90,250],  '4':[190,250], '6':[290,250], 'R':[390,250],
-    'N':[240,175]
-  };
-  const SUB_POS = {
-    '1':[90,66],  '3':[190,66],  '5':[290,66],  '7':[390,66],
-    '2':[90,332], '4':[190,332], '6':[290,332], 'R':[390,332]
+    '1':[90,125],  '3':[190,125], '5':[290,125], '7':[390,125],
+    '2':[90,275],  '4':[190,275], '6':[290,275], 'R':[390,275],
+    'N':[240,200]
   };
 
   const $ = (id) => document.getElementById(id);
@@ -329,17 +372,28 @@
   const labels = [...document.querySelectorAll('.pos-label')];
   const dots   = [...document.querySelectorAll('.pos-dot')];
 
-  // label the gears that have actions, right in the gate
-  const svg = $('gate');
+  // build the gear info modal (press "i") from the config mapping
+  const infoRows = $('infoRows');
   for (const [gear, action] of Object.entries(ACTIONS)) {
-    if (!SUB_POS[gear]) continue;
-    const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    t.setAttribute('class', 'pos-sub');
-    t.setAttribute('x', SUB_POS[gear][0]);
-    t.setAttribute('y', SUB_POS[gear][1]);
-    t.textContent = action.label.toLowerCase() + (action.hold > 0 ? ` · hold ${action.hold}s` : '');
-    svg.appendChild(t);
+    const row = document.createElement('div');
+    row.className = 'info-row';
+    row.innerHTML =
+      `<span class="info-gear">${gear}</span>` +
+      `<span class="info-label">${action.label}</span>` +
+      (action.hold > 0 ? `<span class="info-hold">hold ${action.hold}s</span>` : '');
+    infoRows.appendChild(row);
   }
+  const infoModal = $('infoModal');
+  function toggleInfo(force) {
+    infoModal.classList.toggle('open', force);
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'i' || e.key === 'I') toggleInfo();
+    if (e.key === 'Escape') toggleInfo(false);
+  });
+  infoModal.addEventListener('click', (e) => {
+    if (e.target === infoModal) toggleInfo(false);
+  });
 
   let activeIndex = null;
   let prevButtons = [];
@@ -350,6 +404,8 @@
   let armingGear = null;
   let armingStart = 0;
   let armHideTimer = null;
+  let stateTrusted = false;
+  let adoptTimestamp = 0;
 
   const ts = () => {
     const d = new Date();
@@ -382,12 +438,15 @@
 
   function adopt(pad, via) {
     activeIndex = pad.index;
-    prevButtons = pad.buttons.map(() => false);
     statusEl.textContent = pad.id.slice(0, 40);
     statusEl.classList.add('connected');
-    // a gear already engaged at page load is state, not a command:
-    // display it, but only fire actions on an actual change from here on
-    sentGear = candidateGear = currentGear(pad);
+    // clean-slate rule: never trust the state Chrome hands us at adoption
+    // (it can be a stale leftover from before the page loaded). Start at
+    // neutral and show nothing until the lever actually moves.
+    stateTrusted = false;
+    adoptTimestamp = pad.timestamp;
+    prevButtons = pad.buttons.map(b => b.pressed);
+    sentGear = candidateGear = 'N';
     addEntry(via, `shifter detected`);
   }
 
@@ -536,8 +595,15 @@
       renderRun(await res.json());
     } catch (e) { /* server not up yet — keep quiet */ }
   }
-  setInterval(poll, POLL_MS);
-  poll();
+  // clean slate on every page load: forget the previous run
+  // (the backend keeps it if one is actually running right now)
+  fetch('/gear/reset', {
+    method: 'POST',
+    headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+  }).catch(() => {}).finally(() => {
+    setInterval(poll, POLL_MS);
+    poll();
+  });
 
   // ── main loop ─────────────────────────────────────────────────
   function frame(now) {
@@ -548,6 +614,13 @@
     }
     const pad = navigator.getGamepads()[activeIndex];
     if (!pad) return;
+
+    // show nothing until the device sends its first real report
+    if (!stateTrusted) {
+      if (pad.timestamp === adoptTimestamp) return;
+      stateTrusted = true;
+      prevButtons = pad.buttons.map(() => false); // log real state from here
+    }
 
     pad.buttons.forEach((b, i) => {
       if (b.pressed !== prevButtons[i]) {
