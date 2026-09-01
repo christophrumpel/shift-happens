@@ -6,6 +6,7 @@ use App\Support\GearRun;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class GearController
 {
@@ -34,7 +35,7 @@ class GearController
     public function reset(): JsonResponse
     {
         if (! GearRun::isRunning()) {
-            GearRun::forget();
+            Cache::flush();
         }
 
         return response()->json(['result' => 'reset']);

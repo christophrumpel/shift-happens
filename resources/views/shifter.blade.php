@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>Gear Shifter</title>
+<title>Shift Happens</title>
 <style>
   :root {
     --bg: #0d1117;
@@ -42,7 +42,39 @@
     border: 1px solid var(--border); color: var(--muted);
   }
   .status.connected { border-color: var(--green); color: var(--green); }
-  .hint { font-size: 12px; color: #566070; margin-left: auto; margin-right: 16px; }
+  .hint { font-size: 12px; margin-left: auto; margin-right: 16px; }
+  .hint a { color: #566070; text-decoration: none; }
+  .hint a:hover { color: var(--text); }
+
+  /* ── dev drawer (press "d") ── */
+  #devDrawer {
+    position: fixed; left: 0; right: 0; bottom: 0; height: 52vh;
+    background: var(--panel); border-top: 1px solid var(--border);
+    transform: translateY(102%); transition: transform 0.22s ease;
+    z-index: 15; display: grid; grid-template-columns: 1.2fr 1fr;
+    gap: 28px; padding: 22px 32px;
+    box-shadow: 0 -18px 50px rgba(0,0,0,0.45);
+  }
+  #devDrawer.open { transform: none; }
+  .dev-col { display: flex; flex-direction: column; min-height: 0; }
+  .dev-col h2 {
+    font-size: 15px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--muted); margin-bottom: 14px; font-weight: 600;
+  }
+  #devLog {
+    flex: 1; min-height: 0; overflow-y: auto;
+    font-size: 21px; line-height: 2; font-weight: 600;
+  }
+  #devLog .t { color: var(--muted); }
+  #devLog .ok { color: var(--green); }
+  #devLog .err { color: var(--red); }
+  #devLog .body-json { color: var(--blue); }
+  #devStatus {
+    flex: 1; min-height: 0; overflow-y: auto;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; font-size: 18px; line-height: 1.7;
+    color: var(--green); white-space: pre-wrap; word-break: break-word;
+  }
 
   /* ── gear info modal (press "i") ── */
   #infoModal {
@@ -131,8 +163,9 @@
   /* ── right column ── */
   .right { display: flex; flex-direction: column; gap: 28px; min-height: 0; }
   .right .panel { transition: flex 0.25s ease; }
-  #rawPanel { flex: 1; }
-  .right.has-run #console { flex: 1.7; display: flex; }
+  #rawPanel { flex: 1.2; }
+  #console { flex: 0.6; }
+  .right.has-run #console { flex: 1.6; }
   .right.has-run #rawPanel { flex: 1; }
 
   /* ── arming panel (hold-to-fire gears) ── */
@@ -159,7 +192,8 @@
   .pill.hold { background: rgba(210,153,34,0.15); color: var(--yellow); }
 
   /* ── action console ── */
-  #console { display: none; min-height: 0; transition: border-color 0.2s, box-shadow 0.2s; }
+  #console { display: flex; min-height: 0; transition: border-color 0.2s, box-shadow 0.2s, flex 0.25s ease; }
+  .console-head .title.idle { color: #3a4250; font-size: 20px; font-weight: 600; }
   #console.st-running { border-color: var(--yellow); box-shadow: 0 0 28px rgba(210,153,34,0.12); }
   #console.st-passed  { border-color: var(--green);  box-shadow: 0 0 28px rgba(63,185,80,0.14); }
   #console.st-failed  { border-color: var(--red);    box-shadow: 0 0 28px rgba(248,81,73,0.16); }
@@ -252,8 +286,8 @@
 <body>
 
 <header>
-  <h1>GEAR <span>SHIFTER</span></h1>
-  <span class="hint">i · info</span>
+  <h1>SHIFT <span>HAPPENS</span></h1>
+  <span class="hint"><a href="#" id="hintInfo">i · info</a>&nbsp;&nbsp;&nbsp;<a href="#" id="hintDev">d · dev</a></span>
   <div class="status" id="status">no gamepad</div>
 </header>
 
@@ -292,6 +326,11 @@
 
   <div class="right" id="rightCol">
 
+    <div class="panel" id="rawPanel">
+      <h2>Raw input</h2>
+      <div class="log" id="rawLog"></div>
+    </div>
+
     <div class="panel" id="armPanel">
       <div class="console-head">
         <div>
@@ -305,6 +344,7 @@
     </div>
 
     <div class="panel" id="console">
+      <h2>Action</h2>
       <div class="console-head">
         <div>
           <div class="title" id="consoleTitle">&nbsp;</div>
@@ -319,13 +359,19 @@
       </div>
     </div>
 
-    <div class="panel" id="rawPanel">
-      <h2>Raw input</h2>
-      <div class="log" id="rawLog"></div>
-    </div>
-
   </div>
 
+</div>
+
+<div id="devDrawer">
+  <div class="dev-col">
+    <h2>HTTP → Laravel</h2>
+    <div id="devLog"></div>
+  </div>
+  <div class="dev-col">
+    <h2>GET /gear/status · every 500ms</h2>
+    <pre id="devStatus">null</pre>
+  </div>
 </div>
 
 <div id="infoModal">
@@ -384,13 +430,25 @@
     infoRows.appendChild(row);
   }
   const infoModal = $('infoModal');
+  const devDrawer = $('devDrawer'), devLogEl = $('devLog'), devStatusEl = $('devStatus');
   function toggleInfo(force) {
     infoModal.classList.toggle('open', force);
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'i' || e.key === 'I') toggleInfo();
-    if (e.key === 'Escape') toggleInfo(false);
+    if (e.key === 'd' || e.key === 'D') devDrawer.classList.toggle('open');
+    if (e.key === 'Escape') { toggleInfo(false); devDrawer.classList.remove('open'); }
   });
+
+  $('hintInfo').addEventListener('click', (e) => { e.preventDefault(); toggleInfo(); });
+  $('hintDev').addEventListener('click', (e) => { e.preventDefault(); devDrawer.classList.toggle('open'); });
+
+  function devLog(html) {
+    const div = document.createElement('div');
+    div.innerHTML = `<span class="t">${ts()}</span>  ${html}`;
+    devLogEl.prepend(div);
+    while (devLogEl.children.length > 50) devLogEl.lastChild.remove();
+  }
   infoModal.addEventListener('click', (e) => {
     if (e.target === infoModal) toggleInfo(false);
   });
@@ -427,6 +485,13 @@
   function setDisplay(gear) {
     if (gear === displayedGear) return;
     displayedGear = gear;
+    // the console shows where the lever is NOW: a finished run is
+    // dismissed as soon as you shift away (a running one stays)
+    if (lastRun && gear !== lastRun.gear
+        && (lastRun.status === 'passed' || lastRun.status === 'failed')) {
+      dismissedRunKey = lastRun.started_at + lastRun.gear;
+      rightCol.classList.remove('has-run');
+    }
     const [x,y] = POS[gear] || POS.N;
     knob.setAttribute('transform', `translate(${x},${y})`);
     knob.classList.toggle('neutral', gear === 'N');
@@ -440,12 +505,15 @@
     activeIndex = pad.index;
     statusEl.textContent = pad.id.slice(0, 40);
     statusEl.classList.add('connected');
-    // clean-slate rule: never trust the state Chrome hands us at adoption
-    // (it can be a stale leftover from before the page loaded). Start at
-    // neutral and show nothing until the lever actually moves.
-    stateTrusted = false;
+    // pad.timestamp is zero when Chrome hands us a leftover snapshot from
+    // before this page existed — distrust that until the lever moves. A
+    // positive timestamp means real input arrived during THIS page's life:
+    // usually the very shift that woke the pad up, so trust and log it.
     adoptTimestamp = pad.timestamp;
-    prevButtons = pad.buttons.map(b => b.pressed);
+    stateTrusted = pad.timestamp > 0;
+    prevButtons = stateTrusted
+      ? pad.buttons.map(() => false)      // diff logs the waking press
+      : pad.buttons.map(b => b.pressed);  // swallow the stale snapshot
     sentGear = candidateGear = 'N';
     addEntry(via, `shifter detected`);
   }
@@ -527,11 +595,14 @@
         },
         body: JSON.stringify({ gear }),
       });
+      const reply = await res.clone().json().catch(() => null);
+      devLog(`POST /gear <span class="body-json">{"gear":"${gear}"}</span> → <span class="${res.ok ? 'ok' : 'err'}">${res.status} ${reply?.result ?? ''}</span>`);
       if (res.status === 409) {
         consoleBusy.textContent = 'already running — shift ignored';
         setTimeout(() => consoleBusy.textContent = '', 2500);
       }
     } catch (e) {
+      devLog(`POST /gear → <span class="err">failed: ${e.message}</span>`);
       addEntry('event', `<span class="up">could not reach Laravel: ${e.message}</span>`);
     }
   }
@@ -539,6 +610,8 @@
   // ── poll the run state back from Laravel ──────────────────────
   let renderedRunKey = null;
   let renderedLines = 0;
+  let lastRun = null;
+  let dismissedRunKey = null;
 
   function lineClass(line) {
     if (/FAIL|✗|⨯|Error|ERROR|Exception/.test(line)) return 'ln-fail';
@@ -548,11 +621,21 @@
   }
 
   function renderRun(run) {
-    if (!run) {
+    lastRun = run;
+    if (!run || run.started_at + run.gear === dismissedRunKey) {
       rightCol.classList.remove('has-run');
+      consoleEl.className = 'panel';
+      consoleTitle.textContent = 'no action running';
+      consoleTitle.classList.add('idle');
+      consoleSub.textContent = 'shift into a mapped gear';
+      consolePill.style.display = 'none';
+      consoleElapsed.textContent = '';
+      if (renderedRunKey !== null) { renderedRunKey = null; consoleLog.innerHTML = ''; }
       return;
     }
     rightCol.classList.add('has-run');
+    consoleTitle.classList.remove('idle');
+    consolePill.style.display = '';
 
     const key = run.started_at + run.gear;
     if (key !== renderedRunKey) {
@@ -592,7 +675,10 @@
   async function poll() {
     try {
       const res = await fetch('/gear/status', { headers: { 'Accept': 'application/json' } });
-      renderRun(await res.json());
+      const run = await res.json();
+      devStatusEl.textContent = JSON.stringify(
+        run ? { ...run, lines: `[ ${run.lines.length} lines ]` } : null, null, 2);
+      renderRun(run);
     } catch (e) { /* server not up yet — keep quiet */ }
   }
   // clean slate on every page load: forget the previous run
@@ -600,7 +686,8 @@
   fetch('/gear/reset', {
     method: 'POST',
     headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-  }).catch(() => {}).finally(() => {
+  }).then(r => devLog(`POST /gear/reset → <span class="ok">${r.status}</span> (clean slate)`))
+    .catch(() => {}).finally(() => {
     setInterval(poll, POLL_MS);
     poll();
   });

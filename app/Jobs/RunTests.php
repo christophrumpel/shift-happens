@@ -21,7 +21,7 @@ class RunTests implements ShouldQueue
 
         $result = Process::path(base_path())
             ->timeout(570)
-            ->env([...$this->withoutInheritedEnv(), 'TERM' => 'dumb', 'NO_COLOR' => '1'])
+            ->env($this->preparedEnvironment())
             ->run(['php', 'artisan', 'test', '--colors=never'], function (string $type, string $output) {
                 GearRun::append($output);
             });
@@ -36,26 +36,20 @@ class RunTests implements ShouldQueue
     }
 
     /**
-     * The queue worker's environment carries everything from .env
-     * (APP_ENV=local included), and real environment variables beat
-     * phpunit.xml's <env> entries in child processes. Setting a key
-     * to false removes it from the child's environment, so the test
-     * run actually runs in the "testing" environment.
+     * The environment for the test process: every variable from .env is
+     * removed — real environment variables beat phpunit.xml's <env>
+     * settings, so the tests would otherwise run in the "local"
+     * environment. Colors and spinners are disabled for clean output.
      *
-     * @return array<string, false>
+     * @return array<string, string|false>
      */
-    private function withoutInheritedEnv(): array
+    private function preparedEnvironment(): array
     {
-        $lines = file(base_path('.env')) ?: [];
+        $withoutEnvFile = collect(file(base_path('.env')) ?: [])
+            ->filter(fn (string $line): bool => preg_match('/^\s*[A-Z0-9_]+\s*=/', $line) === 1)
+            ->mapWithKeys(fn (string $line): array => [trim(explode('=', $line, 2)[0]) => false])
+            ->all();
 
-        $env = [];
-
-        foreach ($lines as $line) {
-            if (preg_match('/^\s*[A-Z0-9_]+\s*=/', $line) === 1) {
-                $env[trim(explode('=', $line, 2)[0])] = false;
-            }
-        }
-
-        return $env;
+        return [...$withoutEnvFile, 'TERM' => 'dumb', 'NO_COLOR' => '1'];
     }
 }
