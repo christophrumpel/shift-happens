@@ -10,12 +10,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Gear → action mapping
+    | Gear mapping
     |--------------------------------------------------------------------------
-    | The shifter POSTs a gear number; this map decides what it means.
-    | Unmapped gears do nothing (gear 1 is deliberately free — a safe
-    | "just show the gear" gate). 'hold' (seconds) makes a gear an armed
-    | action: the lever must stay in the gate that long before it fires.
+    | The shifter posts a gear number and this map decides what it means.
+    | Unmapped gears do nothing. A 'hold' value in seconds makes a gear an
+    | armed action: the lever must stay in the gate that long before it fires.
     */
 
     'map' => [
@@ -52,8 +51,8 @@ return [
     |--------------------------------------------------------------------------
     | Laravel Cloud CLI
     |--------------------------------------------------------------------------
-    | project_path: the repo `cloud deploy` runs in — a project bound to a
-    | Cloud app via `cloud repo:config`. Defaults to this app.
+    | The repo that `cloud deploy` runs in, bound to a Cloud app via
+    | `cloud repo:config`. Defaults to this app.
     */
 
     'cloud' => [

@@ -12,7 +12,7 @@ class DeployProduction implements ShouldQueue
 {
     use Queueable;
 
-    /** Never retry a deploy — a duplicate deploy is worse than a failed one. */
+    /** A duplicate deploy is worse than a failed one. */
     public int $tries = 1;
 
     public int $timeout = 1800;

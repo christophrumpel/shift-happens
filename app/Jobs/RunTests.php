@@ -36,10 +36,8 @@ class RunTests implements ShouldQueue
     }
 
     /**
-     * The environment for the test process: every variable from .env is
-     * removed — real environment variables beat phpunit.xml's <env>
-     * settings, so the tests would otherwise run in the "local"
-     * environment. Colors and spinners are disabled for clean output.
+     * Remove everything from .env so phpunit.xml controls the test
+     * environment. Inherited environment variables would win otherwise.
      *
      * @return array<string, string|false>
      */

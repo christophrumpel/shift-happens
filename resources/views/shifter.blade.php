@@ -387,10 +387,10 @@
 
 <script>
 (() => {
-  // ── button index → gear (standard TH8S) ──────────────────────
+  // button index to gear, standard TH8S layout
   const MAPPING = { 0:'1', 1:'2', 2:'3', 3:'4', 4:'5', 5:'6', 6:'7', 7:'R' };
 
-  // gear → { label, hold }, straight from config/gears.php
+  // gear actions from config/gears.php
   const ACTIONS = @json(collect(config('gears.map'))->map(fn ($action) => [
       'label' => $action['label'],
       'hold' => $action['hold'] ?? 0,
@@ -418,7 +418,6 @@
   const labels = [...document.querySelectorAll('.pos-label')];
   const dots   = [...document.querySelectorAll('.pos-dot')];
 
-  // build the gear info modal (press "i") from the config mapping
   const infoRows = $('infoRows');
   for (const [gear, action] of Object.entries(ACTIONS)) {
     const row = document.createElement('div');
@@ -485,8 +484,7 @@
   function setDisplay(gear) {
     if (gear === displayedGear) return;
     displayedGear = gear;
-    // the console shows where the lever is NOW: a finished run is
-    // dismissed as soon as you shift away (a running one stays)
+    // a finished run is dismissed when you shift away, a running one stays
     if (lastRun && gear !== lastRun.gear
         && (lastRun.status === 'passed' || lastRun.status === 'failed')) {
       dismissedRunKey = lastRun.started_at + lastRun.gear;
@@ -505,15 +503,13 @@
     activeIndex = pad.index;
     statusEl.textContent = pad.id.slice(0, 40);
     statusEl.classList.add('connected');
-    // pad.timestamp is zero when Chrome hands us a leftover snapshot from
-    // before this page existed — distrust that until the lever moves. A
-    // positive timestamp means real input arrived during THIS page's life:
-    // usually the very shift that woke the pad up, so trust and log it.
+    // a zero timestamp means Chrome handed us a stale snapshot from before
+    // this page existed, so wait for real input before trusting the state
     adoptTimestamp = pad.timestamp;
     stateTrusted = pad.timestamp > 0;
     prevButtons = stateTrusted
-      ? pad.buttons.map(() => false)      // diff logs the waking press
-      : pad.buttons.map(b => b.pressed);  // swallow the stale snapshot
+      ? pad.buttons.map(() => false)
+      : pad.buttons.map(b => b.pressed);
     sentGear = candidateGear = 'N';
     addEntry(via, `shifter detected`);
   }
@@ -542,7 +538,6 @@
     return 'N';
   }
 
-  // ── arming: hold-to-fire gears ────────────────────────────────
   function startArming(gear, now) {
     armingGear = gear;
     armingStart = now;
@@ -573,7 +568,7 @@
   function cancelArming() {
     armingGear = null;
     armPanel.classList.add('cancelled');
-    armMsg.textContent = 'released too early — nothing was triggered';
+    armMsg.textContent = 'released too early, nothing was triggered';
     armCount.textContent = '';
     armFill.style.width = '0%';
     clearTimeout(armHideTimer);
@@ -583,7 +578,6 @@
     }, 2500);
   }
 
-  // ── send a stable gear to Laravel ─────────────────────────────
   async function shift(gear) {
     try {
       const res = await fetch('/gear', {
@@ -598,7 +592,7 @@
       const reply = await res.clone().json().catch(() => null);
       devLog(`POST /gear <span class="body-json">{"gear":"${gear}"}</span> → <span class="${res.ok ? 'ok' : 'err'}">${res.status} ${reply?.result ?? ''}</span>`);
       if (res.status === 409) {
-        consoleBusy.textContent = 'already running — shift ignored';
+        consoleBusy.textContent = 'already running, shift ignored';
         setTimeout(() => consoleBusy.textContent = '', 2500);
       }
     } catch (e) {
@@ -607,7 +601,6 @@
     }
   }
 
-  // ── poll the run state back from Laravel ──────────────────────
   let renderedRunKey = null;
   let renderedLines = 0;
   let lastRun = null;
@@ -679,10 +672,9 @@
       devStatusEl.textContent = JSON.stringify(
         run ? { ...run, lines: `[ ${run.lines.length} lines ]` } : null, null, 2);
       renderRun(run);
-    } catch (e) { /* server not up yet — keep quiet */ }
+    } catch (e) { /* server not up yet */ }
   }
-  // clean slate on every page load: forget the previous run
-  // (the backend keeps it if one is actually running right now)
+  // clean slate on page load; the backend keeps a run that is still going
   fetch('/gear/reset', {
     method: 'POST',
     headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
@@ -692,7 +684,6 @@
     poll();
   });
 
-  // ── main loop ─────────────────────────────────────────────────
   function frame(now) {
     requestAnimationFrame(frame);
     if (activeIndex === null) {
@@ -702,11 +693,10 @@
     const pad = navigator.getGamepads()[activeIndex];
     if (!pad) return;
 
-    // show nothing until the device sends its first real report
     if (!stateTrusted) {
       if (pad.timestamp === adoptTimestamp) return;
       stateTrusted = true;
-      prevButtons = pad.buttons.map(() => false); // log real state from here
+      prevButtons = pad.buttons.map(() => false);
     }
 
     pad.buttons.forEach((b, i) => {
@@ -726,7 +716,6 @@
     const gear = currentGear(pad);
     setDisplay(gear);
 
-    // arming lifecycle: keep filling while held, cancel on release
     if (armingGear !== null) {
       if (gear === armingGear) updateArming(now);
       else cancelArming();

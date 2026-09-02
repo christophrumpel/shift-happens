@@ -21,7 +21,7 @@ class RunClaudeFix implements ShouldQueue
     private const PROMPT = <<<'PROMPT'
         Run `vendor/bin/phpstan analyse --no-progress --memory-limit=1G`.
         If it reports errors, fix them in the application code with minimal
-        changes — do not modify phpstan.neon and do not lower the level.
+        changes. Do not modify phpstan.neon and do not lower the level.
         Re-run PHPStan afterwards to confirm it passes.
         PROMPT;
 
@@ -55,8 +55,8 @@ class RunClaudeFix implements ShouldQueue
     }
 
     /**
-     * Process output arrives in arbitrary chunks; stream-json events are
-     * one JSON object per line, so buffer until each newline completes.
+     * Output arrives in arbitrary chunks; events are one JSON object
+     * per line, so buffer until each newline completes.
      */
     private function consume(string $output): void
     {

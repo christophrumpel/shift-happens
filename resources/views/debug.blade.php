@@ -216,7 +216,7 @@
       return d;
     });
 
-    padInfoEl.textContent = `${pad.id} — ${pad.buttons.length} buttons`;
+    padInfoEl.textContent = `${pad.id} (${pad.buttons.length} buttons)`;
     log(`<span class="sys">connected: gamepad found</span>`);
   }
 
