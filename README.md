@@ -1,8 +1,8 @@
 # Shift Happens
 
-A Laravel app you drive with a real H-pattern gear shifter.
+A Laravel app you drive with a real gear shifter.
 
-Built for a YouTube video: link coming soon.
+Built for a YouTube video: [link coming soon.](https://youtu.be/prN6b-KhfQU)
 
 Second gear runs the test suite, third runs PHPStan, fourth lets Claude Code
 fix whatever PHPStan found, and fifth gear deploys to production on Laravel
@@ -22,6 +22,6 @@ npm install
 composer run dev
 ```
 
-Open http://localhost:8000. You will need a USB shifter (mine is a
+PS: You will need a USB shifter (mine is a
 Thrustmaster TH8S) and, for gear 5, the
 [Laravel Cloud CLI](https://laravel.com/cloud/docs/api/cli).
